@@ -2,16 +2,16 @@
 
 namespace NewsFeedApi.Models
 {
-    public class NewsStory
+    public class NewsItem
     {
         public string Title { get; }
         public Uri Link { get; }
         public string Description { get; }
-        public string Source { get; }
+        public NewsSource Source { get; }
         public DateTime PublishedDate { get; }
         public Uri Thumbnail { get; }
 
-        public NewsStory(string title, string link, string description, string source, DateTime publishedDate, string thumbnail)
+        public NewsItem(string title, string link, string description, NewsSource source, DateTime publishedDate, string thumbnail)
         {
             Title = title;
             Link = new Uri(link);

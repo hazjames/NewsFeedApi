@@ -1,16 +1,13 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using NewsFeedApi.Services;
+using System.IO;
+using System.Reflection;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace NewsFeedApi
 {
@@ -26,11 +23,18 @@ namespace NewsFeedApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<INewsProvider>(x => new NewsRssParser())
+                .AddSingleton<INewsService>(x => new NewsService(x.GetRequiredService<INewsProvider>()));
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "NewsFeedApi", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo
+                { 
+                    Title = "NewsFeedApi",
+                    Version = "v1",
+                    Description = "A simple news aggregator ASP.NET Core Web API"
+                });
             });
         }
 
@@ -41,7 +45,11 @@ namespace NewsFeedApi
             {
                 app.UseDeveloperExceptionPage();
                 app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "NewsFeedApi v1"));
+                app.UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "NewsFeedApi v1");
+                    c.RoutePrefix = "api";
+                });
             }
 
             app.UseHttpsRedirection();
