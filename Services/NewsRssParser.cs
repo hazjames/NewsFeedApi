@@ -13,7 +13,7 @@ namespace NewsFeedApi.Services
 
         public async Task<IEnumerable<NewsItem>> GetNews(NewsSource source)
         {
-            var rssFeed = await RetrieveRssFeed(source.SourceUrl);
+            var rssFeed = await RetrieveRssFeed(source.Url);
 
             SetNewsSourceImageUrl(source, rssFeed);
 
@@ -28,15 +28,15 @@ namespace NewsFeedApi.Services
                    select new NewsItem(
                        item.Title.Text.Trim(trimChars),
                        item.Links[0].Uri.ToString(),
-                       item.Summary.Text.Trim(trimChars),
+                       item.Summary?.Text.Trim(trimChars),
                        source,
                        item.PublishDate.UtcDateTime,
-                       item.Links.SingleOrDefault(l => l.RelationshipType == "enclosure").Uri.ToString());
+                       item.Links.SingleOrDefault(l => l.RelationshipType == "enclosure")?.Uri.ToString());
         }
 
         private void SetNewsSourceImageUrl(NewsSource source, SyndicationFeed rssFeed)
         {
-            source.ImageUrl = rssFeed.ImageUrl.AbsoluteUri;
+            source.ImageUrl = rssFeed.ImageUrl?.ToString();
         }
 
         private async Task<SyndicationFeed> RetrieveRssFeed(string newsSourceUrl)

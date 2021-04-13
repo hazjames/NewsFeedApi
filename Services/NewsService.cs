@@ -1,5 +1,4 @@
 ﻿using NewsFeedApi.Models;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -30,10 +29,10 @@ namespace NewsFeedApi.Services
 
         public IEnumerable<NewsItem> Sort(IEnumerable<NewsItem> newsItems, string dateSort)
         {
-            if (dateSort == "desc")
-                return newsItems.OrderByDescending(i => i.PublishedDate);
+            if (dateSort == "ascending")
+                return newsItems.OrderBy(i => i.PublishedDate);
 
-            return newsItems.OrderBy(i => i.PublishedDate);
+            return newsItems.OrderByDescending(i => i.PublishedDate);
         }
     }
 }

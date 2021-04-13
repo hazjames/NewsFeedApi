@@ -3,11 +3,15 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
+using NewsFeedApi.Models;
 using NewsFeedApi.Services;
+using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
-using System;
+using System.Text.Json.Serialization;
 
 namespace NewsFeedApi
 {
@@ -26,24 +30,36 @@ namespace NewsFeedApi
             services.AddSingleton<INewsProvider>(x => new NewsRssParser())
                 .AddSingleton<INewsService>(x => new NewsService(x.GetRequiredService<INewsProvider>()));
 
+            services.AddMvc()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
+                });
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
-                { 
+                {
                     Title = "NewsFeedApi",
                     Version = "v1",
                     Description = "A simple news aggregator ASP.NET Core Web API"
                 });
+
+                // Sets the comments path for the Swagger JSON and UI.
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
             });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+        public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
         {
             if (env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
+                //app.UseDeveloperExceptionPage();
+                app.UseExceptionHandler("/error");
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
@@ -51,6 +67,12 @@ namespace NewsFeedApi
                     c.RoutePrefix = "api";
                 });
             }
+            else
+            {
+                app.UseExceptionHandler("/error");
+            }
+
+            loggerFactory.AddFile("Logs/NewsFeedApi-{Date}.log", LogLevel.Warning);
 
             app.UseHttpsRedirection();
 

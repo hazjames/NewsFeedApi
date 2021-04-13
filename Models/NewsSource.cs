@@ -5,13 +5,13 @@ namespace NewsFeedApi.Models
     public class NewsSource
     {
         public string Name { get; }
-        public string SourceUrl { get; }
+        public string Url { get; }
         public string ImageUrl { get; set; }
 
-        public NewsSource(string name, string sourceUrl)
+        public NewsSource(string name, string url)
         {
             Name = name;
-            SourceUrl = sourceUrl;
+            Url = url;
         }
     }
 }
