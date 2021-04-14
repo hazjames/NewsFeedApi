@@ -1,23 +1,31 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace NewsFeedApi.Controllers
 {
     [ApiExplorerSettings(IgnoreApi = true)]
     public class ErrorsController : ControllerBase
     {
-        [Route("error")]
-        public void Error()
+        [Route("/error-local-development")]
+        public IActionResult ErrorLocalDevelopment(
+            [FromServices] IWebHostEnvironment webHostEnvironment)
         {
-            var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
-            var exception = context.Error;
-            var code = 500;
+            if (webHostEnvironment.EnvironmentName != "Development")
+            {
+                throw new InvalidOperationException(
+                    "This shouldn't be invoked in non-development environments.");
+            }
 
-            if (exception is ArgumentException) code = 400;
+            var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
+
+            return Problem(
+                detail: context.Error.StackTrace,
+                title: context.Error.Message);
         }
+
+        [Route("error")]
+        public IActionResult Error() => Problem();
     }
 }

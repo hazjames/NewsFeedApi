@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using NewsFeedApi.Models;
 using NewsFeedApi.Services;
 using System;
@@ -16,32 +16,34 @@ namespace NewsFeedApi.Controllers
     {
         private readonly INewsService _newsService;
 
-        private readonly ILogger _logger;
-
         private readonly IEnumerable<NewsSource> _sources;
 
-        public NewsItemsController(ILogger<NewsItemsController> logger,
-                                    INewsService newsService,
+        public NewsItemsController(INewsService newsService,
                                     IConfiguration config)
         {
-            _logger = logger;
             _newsService = newsService;
             _sources = config.GetSection("NewsRssFeeds")
                 .GetChildren()
                 .Select(source => new NewsSource(source["name"], source["url"]));
         }
 
-        // GET: api/news
+        /// <summary>
+        /// Gets a sorted list of news stories from a list of well known news rss feeds
+        /// </summary>
+        /// <remarks>
+        /// Sample Request:
+        /// 
+        ///     GET api/news?sortDate=descending
+        ///
+        /// </remarks>
+        /// <param name="sortDate">Sort list using either the 'ascending' or 'descending' keyword</param>
+        /// <returns>A list of news stories</returns>
+        /// <response code="500">If a news sources list cannot be found</response>
         [HttpGet]
         [Route("getNews")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult<IEnumerable<NewsItem>>> GetNewsItems(string sortDate)
         {
-            if (_sources is null || !_sources.Any())
-            {
-                _logger.LogError("News sources list not found.");
-                throw new ArgumentException("No news sources were found. Please contact your administrator.");
-            }
-
             var newsItems = await _newsService.GetNews(_sources);
 
             newsItems = _newsService.Sort(newsItems, sortDate);

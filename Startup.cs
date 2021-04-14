@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -27,7 +29,7 @@ namespace NewsFeedApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton<INewsProvider>(x => new NewsRssParser())
+            services.AddSingleton<INewsProvider>(x => new NewsRssParser(x.GetRequiredService<ILogger<NewsRssParser>>()))
                 .AddSingleton<INewsService>(x => new NewsService(x.GetRequiredService<INewsProvider>()));
 
             services.AddMvc()
@@ -58,8 +60,7 @@ namespace NewsFeedApi
         {
             if (env.IsDevelopment())
             {
-                //app.UseDeveloperExceptionPage();
-                app.UseExceptionHandler("/error");
+                app.UseDeveloperExceptionPage();
                 app.UseSwagger();
                 app.UseSwaggerUI(c =>
                 {
@@ -69,7 +70,14 @@ namespace NewsFeedApi
             }
             else
             {
-                app.UseExceptionHandler("/error");
+                app.UseExceptionHandler(c => c.Run(async context =>
+                {
+                    var exception = context.Features
+                        .Get<IExceptionHandlerPathFeature>()
+                        .Error;
+                    var response = new { error = exception.Message };
+                    await context.Response.WriteAsJsonAsync(response);
+                }));
             }
 
             loggerFactory.AddFile("Logs/NewsFeedApi-{Date}.log", LogLevel.Warning);

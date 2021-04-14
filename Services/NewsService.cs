@@ -1,4 +1,5 @@
 ﻿using NewsFeedApi.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -17,6 +18,11 @@ namespace NewsFeedApi.Services
         public async Task<IEnumerable<NewsItem>> GetNews(IEnumerable<NewsSource> sources)
         {
             List<NewsItem> newsItems = new();
+
+            if (sources is null || !sources.Any())
+            {
+                throw new ArgumentException("News sources list missing or empty.");
+            }
 
             foreach (NewsSource source in sources)
             {
