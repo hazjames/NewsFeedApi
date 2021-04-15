@@ -33,20 +33,20 @@ namespace NewsFeedApi.Controllers
         /// <remarks>
         /// Sample Request:
         /// 
-        ///     GET api/news?sortDate=descending
+        ///     GET api/news?sortBy=source,publishedDate:desc
         ///
         /// </remarks>
-        /// <param name="sortDate">Sort list using either the 'ascending' or 'descending' keyword</param>
+        /// <param name="sortBy">Sort list by passing comma seperated list of news story fields with optional sort order (default: ascending)</param>
         /// <returns>A list of news stories</returns>
         /// <response code="500">If a news sources list cannot be found</response>
         [HttpGet]
         [Route("getNews")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<NewsItem>>> GetNewsItems(string sortDate)
+        public async Task<ActionResult<IEnumerable<NewsItem>>> GetNewsItems(string sortBy)
         {
             var newsItems = await _newsService.GetNews(_sources);
 
-            newsItems = _newsService.Sort(newsItems, sortDate);
+            newsItems = _newsService.Sort(newsItems.AsQueryable(), sortBy);
 
             return newsItems.ToList();
         }

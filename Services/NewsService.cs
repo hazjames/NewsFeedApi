@@ -2,6 +2,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Dynamic.Core;
+using System.Reflection;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace NewsFeedApi.Services
@@ -33,12 +36,44 @@ namespace NewsFeedApi.Services
             return newsItems;
         }
 
-        public IEnumerable<NewsItem> Sort(IEnumerable<NewsItem> newsItems, string dateSort)
+        public IEnumerable<NewsItem> Sort(IQueryable<NewsItem> newsItems, string sortBy)
         {
-            if (dateSort == "ascending")
-                return newsItems.OrderBy(i => i.PublishedDate);
+            if (!newsItems.Any())
+                return newsItems.AsEnumerable<NewsItem>();
 
-            return newsItems.OrderByDescending(i => i.PublishedDate);
+            if (string.IsNullOrWhiteSpace(sortBy))
+                return newsItems.OrderByDescending(i => i.PublishedDate)
+                    .AsEnumerable<NewsItem>();
+
+            var sortParams = sortBy.Trim().Split(',');
+            var newsItemProperties = typeof(NewsItem).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var orderQueryBuilder = new StringBuilder();
+
+            foreach (string param in sortParams)
+            {
+                if (string.IsNullOrWhiteSpace(param))
+                    continue;
+
+                var propertyFromQuery = param.Split(':')[0];
+                var newsItemProperty = newsItemProperties.FirstOrDefault(p => p.Name.Equals(propertyFromQuery, StringComparison.InvariantCultureIgnoreCase));
+
+                if (newsItemProperty == null)
+                    continue;
+
+                var sortingOrder = param.EndsWith("desc") ? "descending" : "ascending";
+
+                orderQueryBuilder.Append($"{newsItemProperty.Name.ToString()} {sortingOrder}, ");
+            }
+
+            var orderQuery = orderQueryBuilder.ToString().TrimEnd(',', ' ');
+
+            if (string.IsNullOrWhiteSpace(orderQuery))
+            {
+                return newsItems.OrderByDescending(i => i.PublishedDate)
+                    .AsEnumerable<NewsItem>();
+            }
+
+            return newsItems.OrderBy(orderQuery);
         }
     }
 }

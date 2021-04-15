@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -59,12 +60,12 @@ namespace NewsFeedApi.Services
 
         private NewsItem CreateNewsItem(SyndicationItem item, NewsSource source)
         {
-            char[] trimChars = { ' ', '\t', '\n' };
+            Regex trimRegex = new Regex(@"(\s*<.*?>\s*)+|^\s+|\s+$");
 
             return new NewsItem(
-                       item.Title.Text.Trim(trimChars),
+                       trimRegex.Replace(item.Title.Text, string.Empty),
                        item.Links[0].Uri.ToString(),
-                       item.Summary?.Text.Trim(trimChars),
+                       item.Summary is null ? null : trimRegex.Replace(item.Summary.Text, string.Empty),
                        source,
                        item.PublishDate.UtcDateTime,
                        item.Links.SingleOrDefault(l => l.RelationshipType == "enclosure")?.Uri.ToString());
