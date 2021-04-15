@@ -36,6 +36,31 @@ namespace NewsFeedApi.Services
             return newsItems;
         }
 
+        public IEnumerable<NewsSource> getSources(string include, string exclude, IEnumerable<NewsSource> sources)
+        {
+            if (!string.IsNullOrEmpty(include) && !string.IsNullOrEmpty(exclude))
+                return Enumerable.Empty<NewsSource>();
+
+            if (!string.IsNullOrEmpty(include))
+            {
+                var selectedSources = include.Split(',');
+
+                return from source in sources
+                       where selectedSources.Contains(source.Name.Replace(" ", string.Empty).ToLower())
+                       select source;
+            }
+
+            if (!string.IsNullOrEmpty(exclude))
+            {
+                var excludedSources = exclude.Split(',');
+                return from source in sources
+                       where !excludedSources.Contains(source.Name.Replace(" ", string.Empty).ToLower())
+                       select source;
+            }
+
+            return sources;
+        }
+
         public IEnumerable<NewsItem> Sort(IQueryable<NewsItem> newsItems, string sortBy)
         {
             if (!newsItems.Any())

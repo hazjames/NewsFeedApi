@@ -33,18 +33,28 @@ namespace NewsFeedApi.Controllers
         /// <remarks>
         /// Sample Request:
         /// 
-        ///     GET api/news?sortBy=source,publishedDate:desc
+        ///     GET api/news?sortBy=source,publishedDate:desc&include=dailymail,bbcnews
         ///
         /// </remarks>
         /// <param name="sortBy">Sort list by passing comma seperated list of news story fields with optional sort order (default: ascending)</param>
+        /// <param name="include">Comma seperated list to filter which news sources to include. Cannot be used with exclude parameter.</param>
+        /// <param name="exclude">Comma seperated list to filter which news sources to exclude. Cannot be used with include parameter.</param>
         /// <returns>A list of news stories</returns>
         /// <response code="500">If a news sources list cannot be found</response>
         [HttpGet]
         [Route("getNews")]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<IEnumerable<NewsItem>>> GetNewsItems(string sortBy)
+        public async Task<ActionResult<IEnumerable<NewsItem>>> GetNewsItems(string sortBy, string include, string exclude)
         {
-            var newsItems = await _newsService.GetNews(_sources);
+            IEnumerable<NewsSource> sources = _newsService.getSources(include, exclude, _sources);
+
+            if (!sources.Any())
+                return BadRequest();
+
+            var newsItems = await _newsService.GetNews(sources);
+
+            if (!newsItems.Any())
+                return BadRequest();
 
             newsItems = _newsService.Sort(newsItems.AsQueryable(), sortBy);
 
