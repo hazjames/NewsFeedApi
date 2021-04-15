@@ -33,7 +33,7 @@ namespace NewsFeedApi.Controllers
         /// <remarks>
         /// Sample Request:
         /// 
-        ///     GET api/news?sortBy=source,publishedDate:desc&include=dailymail,bbcnews
+        ///     GET api/news?sortBy=source,publishedDate:desc&include=newssource1,newssource2
         ///
         /// </remarks>
         /// <param name="sortBy">Sort list by passing comma seperated list of news story fields with optional sort order (default: ascending)</param>
@@ -49,6 +49,47 @@ namespace NewsFeedApi.Controllers
             IEnumerable<NewsSource> sources = _newsService.getSources(include, exclude, _sources);
 
             if (!sources.Any())
+                return BadRequest();
+
+            var newsItems = await _newsService.GetNews(sources);
+
+            if (!newsItems.Any())
+                return BadRequest();
+
+            newsItems = _newsService.Sort(newsItems.AsQueryable(), sortBy);
+
+            return newsItems.ToList();
+        }
+
+        /// <summary>
+        /// Gets an sorted aggregated list of news stories from a supplied list of news rss feeds
+        /// </summary>
+        /// <remarks>
+        /// Sample Request:
+        /// 
+        ///     POST api/news?sortBy=source,publishedDate:desc
+        ///     [
+        ///         {
+        ///             Name:"Source Name 1",
+        ///             Url: "https://www.newsource1.com/rss.xml"
+        ///         },
+        ///         {
+        ///             Name:"Source Name 2",
+        ///             Url: "https://www.newsource2.com/rss.xml"
+        ///         }
+        ///     ]
+        ///
+        /// </remarks>
+        /// <param name="sortBy">Sort list by passing comma seperated list of news story fields with optional sort order (default: ascending)</param>
+        /// <param name="sources">A JSON list of news sources.</param>
+        /// <returns>A list of news stories</returns>
+        /// <response code="500">If a news sources list cannot be found or is empty</response>
+        [HttpPost]
+        [Route("getNews")]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<ActionResult<IEnumerable<NewsItem>>> GetNewsItems(string sortBy, IEnumerable<NewsSource> sources)
+        {
+            if (sources is null || !sources.Any())
                 return BadRequest();
 
             var newsItems = await _newsService.GetNews(sources);

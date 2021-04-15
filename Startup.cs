@@ -61,12 +61,6 @@ namespace NewsFeedApi
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "NewsFeedApi v1");
-                    c.RoutePrefix = "api";
-                });
             }
             else
             {
@@ -79,6 +73,13 @@ namespace NewsFeedApi
                     await context.Response.WriteAsJsonAsync(response);
                 }));
             }
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "NewsFeedApi v1");
+                c.RoutePrefix = "api";
+            });
 
             loggerFactory.AddFile("Logs/NewsFeedApi-{Date}.log", LogLevel.Warning);
 
